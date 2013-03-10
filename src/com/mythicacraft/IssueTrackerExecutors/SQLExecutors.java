@@ -12,24 +12,24 @@ import java.util.logging.Logger;
 import com.mythicacraft.IssueTracker.cIssueTracker;
 
 public class SQLExecutors {
-    public String sqlURL;
+    public static String sqlURL;
     public final Logger logger = Logger.getLogger("Minecraft");
 
-    public ResultSet selectSQL;
+    public static ResultSet selectSQL;
     public PreparedStatement statusQueryStatement;
-    public PreparedStatement sampleQueryStatement;
-    public Connection conn;
+    public static PreparedStatement sampleQueryStatement;
+    public static Connection conn;
     public String errorString;
     public static boolean openIssue;
     
   //Creates the connection
-    public void dbConnect() throws SQLException {
+    public static void dbConnect() throws SQLException {
     	sqlURL = "jdbc:mysql://" + cIssueTracker.sqlHost + ":" + cIssueTracker.sqlPort+ "/" + cIssueTracker.sqlDbase;
 		conn = DriverManager.getConnection(sqlURL, cIssueTracker.sqlUser, cIssueTracker.sqlPass);
     }
     
    //Closes open connections
-    public void dbClose() throws SQLException {
+    public static void dbClose() throws SQLException {
 		sampleQueryStatement.close(); //Closes the query
 		conn.close(); //Closes the connection
     }
@@ -83,7 +83,7 @@ public class SQLExecutors {
 		dbClose();
 	}
 	
-	public void adminStatusQuery() throws SQLException { 
+	public static void adminStatusQuery() throws SQLException { 
 		dbConnect();
 		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status !=  '3'"); //Put your query in the quotes
 		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query

@@ -56,21 +56,21 @@ public class IssueCommand implements CommandExecutor{
 						//Calling the SELECT query for status
 						sqlExec.statusQuery();
 						//Pulls each row of the database. Displays each row
-						if(!sqlExec.selectSQL.next()){
+						if(!SQLExecutors.selectSQL.next()){
 							sender.sendMessage(ChatColor.GREEN + "You have no issues to display!");
 						}
 						else {
-							sqlExec.selectSQL.beforeFirst();
-							while (sqlExec.selectSQL.next()) {
-								int tempstatus = sqlExec.selectSQL.getInt("status");
+							SQLExecutors.selectSQL.beforeFirst();
+							while (SQLExecutors.selectSQL.next()) {
+								int tempstatus = SQLExecutors.selectSQL.getInt("status");
 								if (tempstatus == 2){
 									status = "Reviewed";
 								}
-								sender.sendMessage(ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + sqlExec.selectSQL.getString("issue_id") + ChatColor.BLUE + " - Status: " + ChatColor.GOLD + status + ChatColor.BLUE + " - " + ChatColor.GOLD + sqlExec.selectSQL.getString("reason"));
+								sender.sendMessage(ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("issue_id") + ChatColor.BLUE + " - Status: " + ChatColor.GOLD + status + ChatColor.BLUE + " - " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason"));
 								status = "Open";
 								}
 							//Close database connection
-							sqlExec.dbClose();
+							SQLExecutors.dbClose();
 						}
 					}	
 					catch (SQLException e) {
@@ -81,19 +81,19 @@ public class IssueCommand implements CommandExecutor{
 					if(args.length == 1){
 						try {				
 							//Calling the SELECT query for status
-							sqlExec.adminStatusQuery();
+							SQLExecutors.adminStatusQuery();
 							//Pulls each row of the database. Displays each row
 							sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses" + ChatColor.BLUE + "*******");
-							while (sqlExec.selectSQL.next()) {
-								int tempstatus = sqlExec.selectSQL.getInt("status");
+							while (SQLExecutors.selectSQL.next()) {
+								int tempstatus = SQLExecutors.selectSQL.getInt("status");
 								if (tempstatus == 2){
 									status = "Reviewed";
 								}
-								 sender.sendMessage(ChatColor.BLUE + "> Issue #" + sqlExec.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + sqlExec.selectSQL.getString("reason") + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + sqlExec.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status);
+								 sender.sendMessage(ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason") + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status);
 						         status = "Open";
 							}
 							//Close database connection
-							sqlExec.dbClose();
+							SQLExecutors.dbClose();
 							} 	
 						catch (SQLException e) {
 							e.printStackTrace();
@@ -106,7 +106,7 @@ public class IssueCommand implements CommandExecutor{
 								setStatus = "3";
 								try {
 									sqlExec.adminSetQuery();
-									notifyPlayer = sqlExec.selectSQL.getString("player");
+									notifyPlayer = SQLExecutors.selectSQL.getString("player");
 									sender.sendMessage(ChatColor.GREEN + "Issue is now set as 'closed'.");
 									playerNotification();
 								} 
@@ -119,7 +119,7 @@ public class IssueCommand implements CommandExecutor{
 								setStatus = "2";
 								try {
 									sqlExec.adminSetQuery();
-									notifyPlayer = sqlExec.selectSQL.getString("player");
+									notifyPlayer = SQLExecutors.selectSQL.getString("player");
 									sender.sendMessage(ChatColor.GREEN + "Issue is now set as 'reviewed'.");
 									playerNotification();
 								} 
@@ -190,11 +190,11 @@ public class IssueCommand implements CommandExecutor{
 							sqlExec.viewCloseQuery();
 							//Pulls each row of the database. Displays each row
 							sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Your closed tickets" + ChatColor.BLUE + "*******");
-							while (sqlExec.selectSQL.next()) {
-								sender.sendMessage(ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + sqlExec.selectSQL.getString("issue_id") + ChatColor.BLUE + " - " + ChatColor.GOLD + sqlExec.selectSQL.getString("reason"));
+							while (SQLExecutors.selectSQL.next()) {
+								sender.sendMessage(ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("issue_id") + ChatColor.BLUE + " - " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason"));
 								}
 							//Close database connection
-								sqlExec.dbClose();
+								SQLExecutors.dbClose();
 							} 	
 						catch (SQLException e) {
 							e.printStackTrace();
@@ -213,10 +213,10 @@ public class IssueCommand implements CommandExecutor{
 								sqlExec.adminCloseQuery();
 								//Pulls each row of the database. Displays each row
 								sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Closed tickets for: " + closePlayer + ChatColor.BLUE + "*******");
-								while (sqlExec.selectSQL.next()) {
-									 sender.sendMessage(ChatColor.BLUE + "> Issue #" + sqlExec.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + sqlExec.selectSQL.getString("reason"));
+								while (SQLExecutors.selectSQL.next()) {
+									 sender.sendMessage(ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason"));
 									}
-								sqlExec.dbClose();
+								SQLExecutors.dbClose();
 								} 	
 							catch (SQLException e) {
 								sender.sendMessage("No closed issues found for player " + closePlayer);

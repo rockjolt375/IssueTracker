@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.mythicacraft.IssueTrackerExecutors.IssueCommand;
 import com.mythicacraft.IssueTrackerExecutors.SQLExecutors;
+import com.mythicacraft.IssueTrackerListener.IssueTrackerListener;
 
 
 public class cIssueTracker extends JavaPlugin{
@@ -65,6 +66,8 @@ public class cIssueTracker extends JavaPlugin{
 		
 		//prepares the /issue commands
 		this.getCommand("issue").setExecutor(new IssueCommand(this));
+		//Enables the Listener for mod joins
+		 getServer().getPluginManager().registerEvents(new IssueTrackerListener(), this);
 	}
 
 	//Disables the plugin
