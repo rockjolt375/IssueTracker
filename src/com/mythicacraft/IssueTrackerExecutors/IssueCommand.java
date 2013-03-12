@@ -91,7 +91,6 @@ public class IssueCommand implements CommandExecutor{
 							SQLExecutors.adminStatusQuery();
 							
 							//Pulls each row of the database. Displays each row
-							sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses" + ChatColor.BLUE + "*******");
 							while (SQLExecutors.selectSQL.next()) {
 								
 								if(SQLExecutors.selectSQL.getString("reason").length() > 45){
@@ -104,7 +103,7 @@ public class IssueCommand implements CommandExecutor{
 								if (tempstatus == 2){
 									status = "Reviewed";
 								}
-								 pageStatus = pageStatus + " " + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status;
+								 pageStatus = pageStatus + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status + "\n ";
 						         status = "Open";
 							}
 							//Close database connection
@@ -123,7 +122,6 @@ public class IssueCommand implements CommandExecutor{
 							SQLExecutors.adminStatusQuery();
 							
 							//Pulls each row of the database. Displays each row
-							sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses" + ChatColor.BLUE + "*******");
 							while (SQLExecutors.selectSQL.next()) {
 								
 								if(SQLExecutors.selectSQL.getString("reason").length() > 45){
@@ -136,7 +134,7 @@ public class IssueCommand implements CommandExecutor{
 								if (tempstatus == 2){
 									status = "Reviewed";
 								}
-								 pageStatus = pageStatus + "\n " + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status;
+								 pageStatus = pageStatus + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status + "\n ";
 						         status = "Open";
 							}
 							//Close database connection
@@ -158,7 +156,7 @@ public class IssueCommand implements CommandExecutor{
 								return true;
 							}
 							return false;	
-							} 	
+							} 			
 						catch (SQLException e) {
 							e.printStackTrace();
 							}
@@ -315,12 +313,13 @@ public class IssueCommand implements CommandExecutor{
 	public void pageSender(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
         ChatPage message = ChatPaginator.paginate(pageStatus, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
 	    String[] pages = message.getLines(); //puts the lines from the page into a string array
-	    sender.sendMessage(ChatColor.BLUE + "Open/Reviewed Statuses " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal()); //header of page with current and total pages
+	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
 	    sender.sendMessage(pages); //send page string array
 	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
 		    int nextPage = pageNumber + 1;
-		    sender.sendMessage(ChatColor.GOLD + "Type \"/issue status " + nextPage + "\" for next page.");
+		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue status " + nextPage + "\" for next page." + ChatColor.BLUE + "*******");
 	    }
+	    pageStatus = "";
 	}
 	public int pageTotal() { //returns an Int of total pages
 	    ChatPage message = ChatPaginator.paginate(pageStatus, 1, 53, 8);
