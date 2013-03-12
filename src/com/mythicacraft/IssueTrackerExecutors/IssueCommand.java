@@ -2,12 +2,16 @@ package com.mythicacraft.IssueTrackerExecutors;
 
 
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.util.ChatPaginator;
+import org.bukkit.util.ChatPaginator.ChatPage;
 
 
 import com.mythicacraft.IssueTracker.cIssueTracker;
@@ -21,6 +25,7 @@ public class IssueCommand implements CommandExecutor{
 	public static String setStatus;
 	public static String closePlayer;
 	public String notifyPlayer;
+	public String pageStatus = "";
 	
 	public IssueCommand(cIssueTracker plugin){
 		this.plugin = plugin;
@@ -29,6 +34,7 @@ public class IssueCommand implements CommandExecutor{
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
 		senderName = sender.getName();
 		String status = "Open";
+		String reason = "";
 		SQLExecutors sqlExec = new SQLExecutors();
 		
 		if(sender.hasPermission("issuetracker.issue")){
@@ -78,22 +84,80 @@ public class IssueCommand implements CommandExecutor{
 						}
 					}
 				else if (sender.hasPermission("issuetracker.admin")){
+					//If only /issue status is typed treat as 1 page
 					if(args.length == 1){
 						try {				
 							//Calling the SELECT query for status
 							SQLExecutors.adminStatusQuery();
+							
 							//Pulls each row of the database. Displays each row
 							sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses" + ChatColor.BLUE + "*******");
 							while (SQLExecutors.selectSQL.next()) {
+								
+								if(SQLExecutors.selectSQL.getString("reason").length() > 45){
+									reason = SQLExecutors.selectSQL.getString("reason").substring(0,45) + "...";
+								}
+								else{
+									reason = SQLExecutors.selectSQL.getString("reason");
+								}
 								int tempstatus = SQLExecutors.selectSQL.getInt("status");
 								if (tempstatus == 2){
 									status = "Reviewed";
 								}
-								 sender.sendMessage(ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason") + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status);
+								 pageStatus = pageStatus + " " + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status;
 						         status = "Open";
 							}
 							//Close database connection
 							SQLExecutors.dbClose();
+							pageSender(sender, 1);//use method to send pages
+							return true;
+							} 	
+						catch (SQLException e) {
+							e.printStackTrace();
+							}
+						}
+					//If /issue status # is typed
+					if(args.length == 2){
+						try {				
+							//Calling the SELECT query for status
+							SQLExecutors.adminStatusQuery();
+							
+							//Pulls each row of the database. Displays each row
+							sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses" + ChatColor.BLUE + "*******");
+							while (SQLExecutors.selectSQL.next()) {
+								
+								if(SQLExecutors.selectSQL.getString("reason").length() > 45){
+									reason = SQLExecutors.selectSQL.getString("reason").substring(0,45) + "...";
+								}
+								else{
+									reason = SQLExecutors.selectSQL.getString("reason");
+								}
+								int tempstatus = SQLExecutors.selectSQL.getInt("status");
+								if (tempstatus == 2){
+									status = "Reviewed";
+								}
+								 pageStatus = pageStatus + "\n " + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + SQLExecutors.selectSQL.getString("player") + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status;
+						         status = "Open";
+							}
+							//Close database connection
+							SQLExecutors.dbClose();
+							
+							if(letterCheck(args[1]) == true) { //use a method that checks argument for invalid characters (anything but numbers)
+								sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
+								return true;
+							}
+
+							int userPage = Integer.parseInt(args[1]); //now that we know the first arg is a number, make it into an Int
+
+							if(userPage <= pageTotal()) { //as long as the given user page number is less than or equal to the total pages paginated from first string.
+								pageSender(sender, userPage); //use method to send pages
+								return true;
+							}
+							if(userPage > pageTotal()) { // if given user page number is more than the total page number.
+								sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
+								return true;
+							}
+							return false;	
 							} 	
 						catch (SQLException e) {
 							e.printStackTrace();
@@ -247,6 +311,29 @@ public class IssueCommand implements CommandExecutor{
 		Player player = plugin.getServer().getPlayer(notifyPlayer);
 		if(player != null)
 		    player.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.GREEN + "Your issue has been udpated!");
-		
 		}
+	public void pageSender(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
+        ChatPage message = ChatPaginator.paginate(pageStatus, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
+	    String[] pages = message.getLines(); //puts the lines from the page into a string array
+	    sender.sendMessage(ChatColor.BLUE + "Open/Reviewed Statuses " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal()); //header of page with current and total pages
+	    sender.sendMessage(pages); //send page string array
+	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
+		    int nextPage = pageNumber + 1;
+		    sender.sendMessage(ChatColor.GOLD + "Type \"/issue status " + nextPage + "\" for next page.");
+	    }
 	}
+	public int pageTotal() { //returns an Int of total pages
+	    ChatPage message = ChatPaginator.paginate(pageStatus, 1, 53, 8);
+	    int totalPages = message.getTotalPages();
+	    return totalPages;
+	}
+	public boolean letterCheck(String args) { //uses a regex to check for anything that ISN'T a number
+        Pattern checkRegex = Pattern.compile("[\\D]");
+        Matcher regexMatcher = checkRegex.matcher(args);
+        if(regexMatcher.find()) {
+    	return true;
+        }
+        return false;
+	}
+	
+}
