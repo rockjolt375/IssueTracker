@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.util.ChatPaginator;
 import org.bukkit.util.ChatPaginator.ChatPage;
+import org.bukkit.util.permissions.BroadcastPermissions;
 
 
 import com.mythicacraft.IssueTracker.cIssueTracker;
@@ -255,6 +256,7 @@ public class IssueCommand implements CommandExecutor{
 						try {				
 							//Calling the SELECT query for status
 							sqlExec.viewCloseQuery();
+				sender.sendMessage("Debug 10");
 							//Pulls each row of the database. Displays each row
 							while (SQLExecutors.selectSQL.next()) {
 								try{
@@ -289,8 +291,8 @@ public class IssueCommand implements CommandExecutor{
 							//Pulls each row of the database. Displays each row
 							while (SQLExecutors.selectSQL.next()) {
 								try{
-									if(SQLExecutors.selectSQL.getString("reason").length() > 45){
-										reason = SQLExecutors.selectSQL.getString("reason").substring(0,45) + "...";
+									if(SQLExecutors.selectSQL.getString("reason").length() > 40){
+										reason = SQLExecutors.selectSQL.getString("reason").substring(0,40) + "...";
 									}
 									else{
 										reason = SQLExecutors.selectSQL.getString("reason");
@@ -334,6 +336,7 @@ public class IssueCommand implements CommandExecutor{
 								closePlayer = args[2];
 								//Calling the SELECT query for status
 								sqlExec.adminCloseQuery();
+					sender.sendMessage("Debug 5");
 								//Pulls each row of the database. Displays each row
 								if(!SQLExecutors.selectSQL.next()){
 									sender.sendMessage(ChatColor.RED + "No issues found. Did you type the player name correctly?");
@@ -341,18 +344,22 @@ public class IssueCommand implements CommandExecutor{
 								else{
 								SQLExecutors.selectSQL.beforeFirst();
 								while (SQLExecutors.selectSQL.next()) {
+					sender.sendMessage("Debug 6");
 									try{
-										if(SQLExecutors.selectSQL.getString("reason").length() > 45){
-											reason = SQLExecutors.selectSQL.getString("reason").substring(0,45) + "...";
+										if(SQLExecutors.selectSQL.getString("reason").length() > 40){
+											reason = SQLExecutors.selectSQL.getString("reason").substring(0,40) + "...";
+					sender.sendMessage("Debug 7");
 										}
 										else{
 											reason = SQLExecutors.selectSQL.getString("reason");
+					sender.sendMessage("Debug 8");
 										}
 										} catch (SQLException e) {
 											e.printStackTrace();
 										}
 									 pageString = pageString + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason") + "\n";
-									}
+					sender.sendMessage("Debug 9");	
+								}
 								SQLExecutors.dbClose();
 								pageSenderAdminClosed(sender, 1);
 								} 	
@@ -362,7 +369,7 @@ public class IssueCommand implements CommandExecutor{
 								}
 						} //if args 1 = close/closed
 						else {
-							sender.sendMessage(ChatColor.RED + "Please enter a valid issue ID. Type '/issue view closed <player>");
+							sender.sendMessage(ChatColor.RED + "Please enter a valid player ID. Type '/issue view closed <player>");
 						}
 					}
 					else if(args.length == 4){
@@ -371,6 +378,7 @@ public class IssueCommand implements CommandExecutor{
 								closePlayer = args[2];
 								//Calling the SELECT query for status
 								sqlExec.adminCloseQuery();
+					sender.sendMessage("Debug 1");
 								//Pulls each row of the database. Displays each row
 								if(!SQLExecutors.selectSQL.next()){
 									sender.sendMessage(ChatColor.RED + "No issues found. Did you type the player name correctly?");
@@ -378,12 +386,15 @@ public class IssueCommand implements CommandExecutor{
 								else{
 								SQLExecutors.selectSQL.beforeFirst();
 								while (SQLExecutors.selectSQL.next()) {
+					sender.sendMessage("Debug 2");
 									try{
 										if(SQLExecutors.selectSQL.getString("reason").length() > 45){
 											reason = SQLExecutors.selectSQL.getString("reason").substring(0,45) + "...";
+					sender.sendMessage("Debug 3");
 										}
 										else{
 											reason = SQLExecutors.selectSQL.getString("reason");
+					sender.sendMessage("Debug 4");
 										}
 										}
 									catch (SQLException e) {
