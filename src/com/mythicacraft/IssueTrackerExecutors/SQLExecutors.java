@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Logger;
 
+import org.bukkit.command.CommandSender;
+
 import com.mythicacraft.IssueTracker.cIssueTracker;
 
 public class SQLExecutors {
@@ -35,17 +37,17 @@ public class SQLExecutors {
     }
     
     //For /issue status
-	public void statusQuery() throws SQLException { 
+	public void statusQuery(CommandSender playerName, String auth) throws SQLException { 
 		dbConnect();
-		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status !=  '3' AND player = '" + IssueCommand.senderName + "'"); //Put your query in the quotes
+		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status !=  '3' AND player " + auth); //Put your query in the quotes
 		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
 		selectSQL = sqlSelect;
-
 	}
+	
 	//For /issue create
-	public void createQuery() throws SQLException { 
+	public void createQuery(String playerName, String reason) throws SQLException { 
 		dbConnect();
-		sampleQueryStatement = conn.prepareStatement("INSERT INTO itrack_issuetracker (player, status, reason) VALUES ('"+ IssueCommand.senderName + "', 1, '"+ IssueCommand.issueReason + "')"); //Put your query in the quotes
+		sampleQueryStatement = conn.prepareStatement("INSERT INTO itrack_issuetracker (player, status, reason) VALUES ('"+ playerName + "', 1, '"+ reason + "')"); //Put your query in the quotes
 		sampleQueryStatement.executeUpdate(); //Executes the query
 		dbClose();
 	}
@@ -70,15 +72,30 @@ public class SQLExecutors {
 		dbClose();
 	}
 	
+    //For /issue view <ticket ID>
+	public void issueQuery() throws SQLException { 
+		dbConnect();
+		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE issue_ID = " + IssueCommand.issueID + " AND player = '" + IssueCommand.senderName + "'"); //Put your query in the quotes
+		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
+		selectSQL = sqlSelect;
+	}
+	
+	public void adminIssueQuery() throws SQLException { 
+		dbConnect();
+		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE issue_ID = " + IssueCommand.issueID); //Put your query in the quotes
+		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
+		selectSQL = sqlSelect;
+	}
+	
 	//For admin /issue status set #
 	public void adminSetQuery() throws SQLException { 
 		dbConnect();	
 		try{
-		sampleQueryStatement = conn.prepareStatement("UPDATE itrack_issuetracker SET status = " + IssueCommand.setStatus +" WHERE issue_ID = " + IssueCommand.closeIssueID); //Put your query in the quotes
+		sampleQueryStatement = conn.prepareStatement("UPDATE itrack_issuetracker SET status = " + IssueCommand.setStatus +" WHERE issue_ID = " + IssueCommand.issueID); //Put your query in the quotes
 		sampleQueryStatement.executeUpdate(); //Executes the query	
 		}
 		catch (Exception e){
-			errorString = ("Please enter a valid issue ID.");
+			errorString = "Please enter a valid issue ID.";
 		}
 		dbClose();
 	}
