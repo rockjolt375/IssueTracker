@@ -33,7 +33,7 @@ public class IssueCommand implements CommandExecutor{
 		this.plugin = plugin;
 	}
 	
-	Utility util = new Utility();
+	Issue util = new Issue();
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
 		senderName = sender.getName();
@@ -411,6 +411,61 @@ public class IssueCommand implements CommandExecutor{
 		}
 		catch(Exception ex){
 			ex.printStackTrace();
+		}
+	}
+	public void pageSenderOpen(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
+        ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
+	    String[] pages = message.getLines(); //puts the lines from the page into a string array
+	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
+	    sender.sendMessage(pages); //send page string array
+	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
+		    int nextPage = pageNumber + 1;
+		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue status " + nextPage + "\" for next page." + ChatColor.BLUE + "*******");
+	    }
+	    pageString = "";
+	}
+	public void pageSenderAdminClosed(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
+        ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
+	    String[] pages = message.getLines(); //puts the lines from the page into a string array
+	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Closed Issues For: " + closePlayer + ChatColor.GOLD + " Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
+	    sender.sendMessage(pages); //send page string array
+	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
+		    int nextPage = pageNumber + 1;
+		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue view closed <player> " + nextPage + ChatColor.BLUE + "*******");
+	    }
+	    pageString = "";
+	}
+	public void pageSenderClosed(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
+        ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
+	    String[] pages = message.getLines(); //puts the lines from the page into a string array
+	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Your Closed Issues" + ChatColor.GOLD + " Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
+	    sender.sendMessage(pages); //send page string array
+	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
+		    int nextPage = pageNumber + 1;
+		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue view closed " + nextPage + "\" for next page." + ChatColor.BLUE + "*******");
+	    }
+	    pageString = "";
+	}
+	public int pageTotal() { //returns an Int of total pages
+	    ChatPage message = ChatPaginator.paginate(pageString, 1, 53, 8);
+	    int totalPages = message.getTotalPages();
+	    return totalPages;
+	}
+	public boolean letterCheck(String args) { //uses a regex to check for anything that ISN'T a number
+        Pattern checkRegex = Pattern.compile("[\\D]");
+        Matcher regexMatcher = checkRegex.matcher(args);
+        if(regexMatcher.find()) {
+    	return true;
+        }
+        return false;
+	}	
+	public String shortenIssue(String issueReason){
+		if(issueReason.length() < 45){
+			return issueReason;
+		}
+		else {
+			String shortReason = issueReason.substring(0,45) + "...";
+			return shortReason;
 		}
 	}
 
