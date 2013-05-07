@@ -31,26 +31,27 @@ public class SQLExecutors {
     }
     
    //Closes open connections
-    public static void dbClose() throws SQLException {
+    public void dbClose() throws SQLException {
 		sampleQueryStatement.close(); //Closes the query
 		conn.close(); //Closes the connection
     }
   
 	//For /issue create
-	public void createQuery(String playerName, String reason) throws SQLException { 
+	public void createQuery(CommandSender sender, String reason) throws SQLException { 
 		dbConnect();
-		sampleQueryStatement = conn.prepareStatement("INSERT INTO itrack_issuetracker (player, status, reason) VALUES ('"+ playerName + "', 1, '"+ reason + "')"); //Put your query in the quotes
+		sampleQueryStatement = conn.prepareStatement("INSERT INTO itrack_issuetracker (player, status, reason) VALUES ('"+ sender + "', 1, '"+ reason + "')"); //Put your query in the quotes
 		sampleQueryStatement.executeUpdate(); //Executes the query
 		dbClose();
 	}  
 
-	public ResultSet adminIssueQuery(int issueID) throws SQLException { 
+	//Returns issue from DB based on issue ID
+	public ResultSet issueQuery(int issueID) throws SQLException { 
 		dbConnect();
 		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE issue_ID = " + issueID); //Put your query in the quotes
 		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
 		return sqlSelect;
 	}
-	//For admin /issue status set #
+	//Sets issue to entered status
 	public void SetQuery(int statusID, int issueID) throws SQLException { 
 		dbConnect();	
 		try{
@@ -62,23 +63,47 @@ public class SQLExecutors {
 		dbClose();
 	}	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-    //For /issue status
-	public void statusQuery(CommandSender playerName, String auth) throws SQLException { 
+    //Pulls all open/reviewed issues
+	public ResultSet statusQuery(String auth) throws SQLException { 
 		dbConnect();
 		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status !=  '3' AND player " + auth); //Put your query in the quotes
 		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
 		selectSQL = sqlSelect;
+		return sqlSelect;
 	}
+	
+	//Pulls closed issues
+	public ResultSet closeQuery(String auth) throws SQLException { 
+		dbConnect();
+		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status = '3' AND player " + auth); //Put your query in the quotes
+		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
+		selectSQL = sqlSelect;
+		return sqlSelect;
+	}	
+	
+	//Called onEnable - checks if database exists, if not - creates database
+	public void CreateTable() throws SQLException { 
+		dbConnect();
+		DatabaseMetaData dbm = conn.getMetaData();
+		ResultSet tables = dbm.getTables(null, null, "itrack_issuetracker", null);
+		this.logger.info("Checking for IssueTracker database table....");
+		if (!tables.next()) {
+			this.logger.info("Table not found, creating table");
+			Statement stmt = conn.createStatement();
+			String sql = "CREATE TABLE itrack_issuetracker(issue_id INT AUTO_INCREMENT KEY, player varchar(255) NOT NULL, status int, reason varchar(255))";
+			stmt.executeUpdate(sql);
+		}
+		conn.close();
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+/* Unused SQL for now
 	
     //For /issue view <ticket ID>
 	public void issueQuery() throws SQLException { 
@@ -108,12 +133,6 @@ public class SQLExecutors {
 		dbClose();
 	}
 	
-
-	
-
-	
-
-	
 	public static void adminStatusQuery() throws SQLException { 
 		dbConnect();
 		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status !=  '3'"); //Put your query in the quotes
@@ -131,13 +150,6 @@ public class SQLExecutors {
 		}
 	}
 	
-	public void adminCloseQuery() throws SQLException { 
-		dbConnect();
-		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status = '3' AND player = '" + IssueCommand.closePlayer + "'"); //Put your query in the quotes
-		ResultSet sqlSelect = sampleQueryStatement.executeQuery(); //Executes the query
-		selectSQL = sqlSelect;
-	}
-	
 	public void viewCloseQuery() throws SQLException { 
 		dbConnect();
 		sampleQueryStatement = conn.prepareStatement("SELECT * FROM itrack_issuetracker WHERE status = '3' AND player = '" + IssueCommand.senderName + "'"); //Put your query in the quotes
@@ -145,20 +157,5 @@ public class SQLExecutors {
 		selectSQL = sqlSelect;
 	}
 	
-	//Called onEnable - checks if database exists, if not - creates database
-	public void CreateTable() throws SQLException { 
-		dbConnect();
-		DatabaseMetaData dbm = conn.getMetaData();
-		ResultSet tables = dbm.getTables(null, null, "itrack_issuetracker", null);
-		this.logger.info("Checking for IssueTracker database table....");
-		if (!tables.next()) {
-			this.logger.info("Table not found, creating table");
-			Statement stmt = conn.createStatement();
-			String sql = "CREATE TABLE itrack_issuetracker(issue_id INT AUTO_INCREMENT KEY, player varchar(255) NOT NULL, status int, reason varchar(255))";
-			stmt.executeUpdate(sql);
-		}
-		conn.close();
-	}
-
-	
+	*/
 }

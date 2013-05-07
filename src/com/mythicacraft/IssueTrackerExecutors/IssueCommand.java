@@ -19,29 +19,33 @@ import com.mythicacraft.IssueTracker.cIssueTracker;
 public class IssueCommand implements CommandExecutor{
 
 	private cIssueTracker plugin;
-	public static String issueReason = "";
-	public static String senderName;
 	public static String closeIssueID;
-	public static String issueID;
 	public static String setStatus;
 	public static String closePlayer;
-	public String notifyPlayer;
 	public String pageString = "";
+	public String notifyPlayer;
 	public String reason;
+	public String auth;
 	
+	IssueManager IM = new IssueManager();
+	SQLExecutors sqlExec = new SQLExecutors();
 	public IssueCommand(cIssueTracker plugin){
 		this.plugin = plugin;
 	}
 	
-	Issue util = new Issue();
-	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
-		senderName = sender.getName();
+		String senderName = sender.getName();
 		String status = "Open";
 		String reason = "";
-		SQLExecutors sqlExec = new SQLExecutors();
+
+		if(!sender.hasPermission("issuetracker.admin")){
+			auth = "player";
+		}
+		else{
+			auth = "admin";
+		}
 		
-		if(sender.hasPermission("issuetracker.issue")){
+		if(sender.hasPermission("issuetracker.issue")){ //Initial permission check
 		
 		//Triggered when /issue [arg] is typed in any form
 		if(commandLabel.equalsIgnoreCase("issue")){
@@ -61,65 +65,43 @@ public class IssueCommand implements CommandExecutor{
 			}
 			//When a player types '/issue status' do...
 			else if(args[0].equalsIgnoreCase("status")){
-				if (args.length == 1 && !sender.hasPermission("issuetracker.admin")){
+				if (args.length == 1){
 					//If only /issue status is typed treat as 1 page
 					if(args.length == 1){
-						util.statusIssue(sender, "1", "player");
+						Issue[] openIssues = IM.getOpenIssues(senderName);
+						for(int i = 0; i < openIssues.length; i++){
+							pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
 						}
-					//If /issue status # is typed
-					if(args.length == 2){
-						util.statusIssue(sender, args[1], "player");
-						}
+						pageSenderOpen(sender, 1);
 					}
-				else if (sender.hasPermission("issuetracker.admin")){
-					//If only /issue status is typed treat as 1 page
-					if(args.length == 1){
-						util.statusIssue(sender, "1", "admin");
-						}
 					//If /issue status # is typed
 					if(args.length == 2){
-						util.statusIssue(sender, args[1], "admin");
+						Issue[] openIssues = IM.getOpenIssues(senderName);
+						for(int i = 0; i < openIssues.length; i++){
+							pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
 						}
-				}
+						paginationCheck(sender, args[1]);
+
+					}
 				else{
 					//If player does not have permission issuetracker.admin
 					sender.sendMessage(ChatColor.RED + "You do not have permissions to use this command!");
 					}
-				 
+				}
 			}
 			else if(args[0].equalsIgnoreCase("set")){
 				if(!sender.hasPermission("issuetracker.admin")){
 					sender.sendMessage(ChatColor.RED + "You do not have permissions for this command!");
 				}
 				else if(sender.hasPermission("issuetracker.admin")){
-				issueID = args[1];
-				//if '/issue status # close' is typed
-					if(args[2].equalsIgnoreCase("close") || args[2].equalsIgnoreCase("closed")){
-						setStatus = "3";
-						try {
-							sqlExec.adminSetQuery();
-							sender.sendMessage(ChatColor.GREEN + "Issue is now set as 'closed'.");
-							sqlExec.adminIssueQuery();
-							playerNotification(SQLExecutors.selectSQL.getString("player"));
-							SQLExecutors.dbClose();
-						} 
-						catch (SQLException e) {
-							sender.sendMessage(ChatColor.GOLD + "Please enter a valid issue ID.");
-							}
-						}
-					//if '/issue status # reviewed' is typed
-					else if (args[2].equalsIgnoreCase("reviewed")){
-						setStatus = "2";
-						try {
-							sqlExec.adminSetQuery();
-							sender.sendMessage(ChatColor.GREEN + "Issue is now set as 'reviewed'.");
-							sqlExec.adminIssueQuery();
-							playerNotification(SQLExecutors.selectSQL.getString("player"));
-							SQLExecutors.dbClose();
-						} 
-						catch (SQLException e) {
-							sender.sendMessage(ChatColor.GOLD + "Please enter a valid issue ID.");
-							}
+				//if '/issue status # <close/closed/reviewed>' is typed
+					int issueID;
+					if(args[2].equalsIgnoreCase("close") || args[2].equalsIgnoreCase("closed") || args[2].equalsIgnoreCase("reviewed")){
+						try{
+							issueID = Integer.parseInt(args[1]);
+						} catch (Exception e){ sender.sendMessage(ChatColor.RED + "That is not a valid issue ID!"); return true;}
+						Issue setIssue = IM.getIssue(issueID);
+						setIssue.setStatus(issueID, setIssue.switchStatus(args[2]));
 						}
 					else {
 						//if the format was wrong
@@ -130,18 +112,15 @@ public class IssueCommand implements CommandExecutor{
 			//Triggers when /issue create args[x] is typed
 			else if(args[0].equalsIgnoreCase("create")){
 				 if(args.length >= 2){
+					String issueReason;
 					for(int i = 1; i < args.length; i++){
 						issueReason += " " + args[i];
 					}
 					issueReason = issueReason.substring(1);
-					try {
-						sqlExec.createQuery();
-						} 
-					catch (SQLException e) {
-						e.printStackTrace();
-						}
+					
+					IM.createIssue(sender, issueReason);
 					sender.sendMessage(ChatColor.GREEN + "Your issue has successfully been submitted. A moderator will review it as soon as possible. You may type '/issue status' to view the status of your issues.");
-					issueReason = "";
+
 					for(Player mod: plugin.getServer().getOnlinePlayers()) {    
 		                if(mod.hasPermission("issuetracker.admin")) {      
 		                 mod.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.GREEN + "A player submitted an issue. Type '/issue status' to view it.");
@@ -155,14 +134,20 @@ public class IssueCommand implements CommandExecutor{
 			//Triggers when /issue close is typed
 			else if(args[0].equalsIgnoreCase("close")){
 				if(args.length == 2){
-					try {
-					closeIssueID = args[1];
-					sqlExec.closeQuery();
+					String player = sender.getName();
+					int issueID;
+					try{
+						issueID = Integer.parseInt(args[1]);
+					}
+					catch(Exception e){ sender.sendMessage(ChatColor.RED + "Please enter a valid issue ID! Type '/issue status' to view your issue"); return true;}
+					Issue closeIssue = IM.getIssue(issueID);
+					
+					if(!player.equalsIgnoreCase(closeIssue.getPlayer())){
+						sender.sendMessage(ChatColor.RED + "You can't close another player's issue!");
+						return true;
+					}
+					closeIssue.setStatus(issueID, 3);
 					sender.sendMessage(ChatColor.GREEN + "You have successfully closed your issue!");
-					}
-					catch (Exception e) {
-						sender.sendMessage(ChatColor.RED + "You must enter a valid issue ID. Type '/issue status' to view your issues.");
-					}
 				}
 				else {
 					sender.sendMessage(ChatColor.RED + "Please type '/issue close <issue_ID>' to close an issue.");
@@ -413,6 +398,7 @@ public class IssueCommand implements CommandExecutor{
 			ex.printStackTrace();
 		}
 	}
+	
 	public void pageSenderOpen(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
         ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
 	    String[] pages = message.getLines(); //puts the lines from the page into a string array
@@ -424,7 +410,7 @@ public class IssueCommand implements CommandExecutor{
 	    }
 	    pageString = "";
 	}
-	public void pageSenderAdminClosed(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
+	public void pageSenderClosed(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
         ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
 	    String[] pages = message.getLines(); //puts the lines from the page into a string array
 	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Closed Issues For: " + closePlayer + ChatColor.GOLD + " Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
@@ -435,17 +421,7 @@ public class IssueCommand implements CommandExecutor{
 	    }
 	    pageString = "";
 	}
-	public void pageSenderClosed(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
-        ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
-	    String[] pages = message.getLines(); //puts the lines from the page into a string array
-	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Your Closed Issues" + ChatColor.GOLD + " Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
-	    sender.sendMessage(pages); //send page string array
-	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
-		    int nextPage = pageNumber + 1;
-		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue view closed " + nextPage + "\" for next page." + ChatColor.BLUE + "*******");
-	    }
-	    pageString = "";
-	}
+
 	public int pageTotal() { //returns an Int of total pages
 	    ChatPage message = ChatPaginator.paginate(pageString, 1, 53, 8);
 	    int totalPages = message.getTotalPages();
@@ -459,6 +435,26 @@ public class IssueCommand implements CommandExecutor{
         }
         return false;
 	}	
+	
+	public boolean paginationCheck(CommandSender sender, String testPage){
+
+		if (letterCheck(testPage) == true){
+			sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
+			return true;
+		}
+		int userPage = Integer.parseInt(testPage);
+
+		if(userPage <= pageTotal()) {
+			pageSenderOpen(sender, userPage);
+			return true;
+		}
+		if(userPage > pageTotal()){
+			sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
+			return true;
+			}
+		return false;
+	}
+	
 	public String shortenIssue(String issueReason){
 		if(issueReason.length() < 45){
 			return issueReason;

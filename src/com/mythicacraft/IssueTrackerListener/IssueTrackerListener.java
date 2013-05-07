@@ -14,6 +14,8 @@ import com.mythicacraft.IssueTrackerExecutors.SQLExecutors;
 
 public class IssueTrackerListener implements Listener {
 	
+	SQLExecutors SQLExec = new SQLExecutors();
+	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerJoin(PlayerJoinEvent event){
 		Player player = event.getPlayer();
@@ -31,7 +33,7 @@ public class IssueTrackerListener implements Listener {
 				player.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.AQUA + "There are issues that need resolved! Type '/issue status' to view them.");
 				//Close database
 				try {
-					SQLExecutors.dbClose();
+					SQLExec.dbClose();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
