@@ -1,5 +1,6 @@
 package com.mythicacraft.IssueTrackerListener;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.bukkit.ChatColor;
@@ -22,22 +23,18 @@ public class IssueTrackerListener implements Listener {
 		
 		//Check if joining player is a mod
 		if(player.hasPermission("issuetracker.admin")) {
+			ResultSet sqlResult;
 			//Calls the query to check if issues are unanswered
 			try {
-				SQLExecutors.adminStatusQuery();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			//IF openIssue = true then show mod on login
-			if(SQLExecutors.openIssue = true){
-				player.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.AQUA + "There are issues that need resolved! Type '/issue status' to view them.");
-				//Close database
-				try {
+				sqlResult =SQLExec.statusQuery("IS NOT NULL");
+				if(!sqlResult.next()){
 					SQLExec.dbClose();
-				} catch (SQLException e) {
-					e.printStackTrace();
 				}
-			}
+				else{
+					player.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.AQUA + "There are issues that need resolved! Type '/issue status' to view them.");
+					SQLExec.dbClose();
+				}
+			} catch (SQLException e) {e.printStackTrace();}
 		}
 	}
 }

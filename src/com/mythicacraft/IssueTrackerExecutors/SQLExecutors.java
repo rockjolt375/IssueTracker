@@ -16,6 +16,7 @@ import com.mythicacraft.IssueTracker.cIssueTracker;
 public class SQLExecutors {
     public static String sqlURL;
     public final Logger logger = Logger.getLogger("Minecraft");
+    public static final Logger log = Logger.getLogger("Minecraft");
 
     public static ResultSet selectSQL;
     public PreparedStatement statusQueryStatement;
@@ -25,10 +26,10 @@ public class SQLExecutors {
     public static boolean openIssue;
     
   //Creates the connection
-    public static void dbConnect() throws SQLException {
-    	sqlURL = "jdbc:mysql://" + cIssueTracker.sqlHost + ":" + cIssueTracker.sqlPort+ "/" + cIssueTracker.sqlDbase;
+    public void dbConnect() throws SQLException {
+        sqlURL = "jdbc:mysql://" + cIssueTracker.sqlHost + ":" + cIssueTracker.sqlPort+ "/" + cIssueTracker.sqlDbase;
 		conn = DriverManager.getConnection(sqlURL, cIssueTracker.sqlUser, cIssueTracker.sqlPass);
-    }
+   }
     
    //Closes open connections
     public void dbClose() throws SQLException {
@@ -88,16 +89,13 @@ public class SQLExecutors {
 		ResultSet tables = dbm.getTables(null, null, "itrack_issuetracker", null);
 		this.logger.info("Checking for IssueTracker database table....");
 		if (!tables.next()) {
-			this.logger.info("Table not found, creating table");
+			this.logger.info("Table not found, creating table...");
 			Statement stmt = conn.createStatement();
 			String sql = "CREATE TABLE itrack_issuetracker(issue_id INT AUTO_INCREMENT KEY, player varchar(255) NOT NULL, status int, reason varchar(255))";
 			stmt.executeUpdate(sql);
 		}
 		conn.close();
 	}
-	
-	
-	
 	
 	
 	

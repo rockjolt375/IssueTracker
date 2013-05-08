@@ -24,6 +24,16 @@ public class Issue {
 		} catch (SQLException e) {e.printStackTrace();}
 	}
 	
+//Issue constructor method	
+	Issue(String player, int statusID, int issueID , String reason){
+		this.player = player;
+		this.issueID = issueID;
+		this.statusID = statusID;
+		this.status = switchStatus(statusID);
+		this.reason = reason;
+	}
+	
+	
 //Issue ID Constructor Method
 	Issue(int issueID){
 		ResultSet sqlResult;

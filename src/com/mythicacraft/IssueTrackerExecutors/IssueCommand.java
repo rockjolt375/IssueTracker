@@ -1,7 +1,5 @@
 package com.mythicacraft.IssueTrackerExecutors;
 
-
-import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,8 +33,6 @@ public class IssueCommand implements CommandExecutor{
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
 		String senderName = sender.getName();
-		String status = "Open";
-		String reason = "";
 
 		if(!sender.hasPermission("issuetracker.admin")){
 			auth = "player";
@@ -65,30 +61,37 @@ public class IssueCommand implements CommandExecutor{
 			}
 			//When a player types '/issue status' do...
 			else if(args[0].equalsIgnoreCase("status")){
+				Issue[] openIssues;
 				if (args.length == 1){
-					//If only /issue status is typed treat as 1 page
-					if(args.length == 1){
-						Issue[] openIssues = IM.getOpenIssues(senderName);
-						for(int i = 0; i < openIssues.length; i++){
-							pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
-						}
-						pageSenderOpen(sender, 1);
+					//If-Else triggers getter method for correct permission level
+					if(!sender.hasPermission("issuetracker.admin")){
+						openIssues = IM.getOpenIssues(senderName);
 					}
-					//If /issue status # is typed
-					if(args.length == 2){
-						Issue[] openIssues = IM.getOpenIssues(senderName);
-						for(int i = 0; i < openIssues.length; i++){
-							pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
-						}
-						paginationCheck(sender, args[1]);
-
+					else{
+						openIssues = IM.getOpenIssues();
 					}
-				else{
-					//If player does not have permission issuetracker.admin
+					for(int i = 0; i < openIssues.length; i++){
+						pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
+					}
+					pageSenderOpen(sender, 1);
+				}
+				else if(args.length == 2){
+					//If-Else triggers getter method for correct permission level
+					if(!sender.hasPermission("issuetracker.admin")){
+						openIssues = IM.getOpenIssues(senderName);
+					}
+					else{
+					openIssues = IM.getOpenIssues();
+					}
+					for(int i = 0; i < openIssues.length; i++){
+						pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
+					}
+					paginationCheck(sender, args[1], "open");
+					}
+				else{ //Triggers if issuetracker permissions are not set
 					sender.sendMessage(ChatColor.RED + "You do not have permissions to use this command!");
 					}
 				}
-			}
 			else if(args[0].equalsIgnoreCase("set")){
 				if(!sender.hasPermission("issuetracker.admin")){
 					sender.sendMessage(ChatColor.RED + "You do not have permissions for this command!");
@@ -102,6 +105,7 @@ public class IssueCommand implements CommandExecutor{
 						} catch (Exception e){ sender.sendMessage(ChatColor.RED + "That is not a valid issue ID!"); return true;}
 						Issue setIssue = IM.getIssue(issueID);
 						setIssue.setStatus(issueID, setIssue.switchStatus(args[2]));
+						playerNotification(setIssue.getPlayer());
 						}
 					else {
 						//if the format was wrong
@@ -112,7 +116,7 @@ public class IssueCommand implements CommandExecutor{
 			//Triggers when /issue create args[x] is typed
 			else if(args[0].equalsIgnoreCase("create")){
 				 if(args.length >= 2){
-					String issueReason;
+					String issueReason = "";
 					for(int i = 1; i < args.length; i++){
 						issueReason += " " + args[i];
 					}
@@ -155,231 +159,61 @@ public class IssueCommand implements CommandExecutor{
 			}
 			//When a player types '/issue view closed' do...
 			else if(args[0].equalsIgnoreCase("view")){
-				//If user types /issue view closed only - treat as page 1
-				if(args.length == 2 && !sender.hasPermission("issuetracker.admin")){
-					if(args[1].equalsIgnoreCase("closed") || args[1].equalsIgnoreCase("close")){
-						try {				
-							//Calling the SELECT query for status
-							sqlExec.viewCloseQuery();
-							//Pulls each row of the database. Displays each row
-							while (SQLExecutors.selectSQL.next()) {
-								try{
-									reason = shortenIssue(SQLExecutors.selectSQL.getString("reason"));
-									} catch (SQLException e) {
-										e.printStackTrace();
-									}
-								pageString = pageString + ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("issue_id") + ChatColor.BLUE + " - " + ChatColor.GOLD + reason + "\n";
-								}
-							//Close database connection
-								SQLExecutors.dbClose();
-								pageSenderClosed(sender, 1);//use method to send pages
-							} 	
-						catch (SQLException e) {
-							e.printStackTrace();
-							}
-						}
-					else {
-						issueID = args[1];
-						try{
-							@SuppressWarnings("unused")
-							int temp = Integer.parseInt(issueID);
-							
-							sqlExec.issueQuery();
-							if(!SQLExecutors.selectSQL.next()){
-								sender.sendMessage(ChatColor.RED + "No issues found. Did you type the issue ID correctly?");
-							}
-							else{
-								SQLExecutors.selectSQL.beforeFirst();
-								while (SQLExecutors.selectSQL.next()) {
-									switch(SQLExecutors.selectSQL.getInt("status")){
-									case 1:
-										setStatus = "Open";
-										break;
-									case 2:
-										setStatus = "Reviewed";
-										break;
-									case 3:
-										setStatus = "Closed";
-										break;
-									}
-									sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ChatColor.BLUE + "*******" ); //header of view issue
-								    sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GOLD + setStatus + ChatColor.BLUE + "\nIssue: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason"));
-								}
-								SQLExecutors.dbClose();
-							}
-						}
-						catch(Exception ex){
-						sender.sendMessage(ChatColor.RED + "Please type '/issue view closed' or '/issue view <issue ID>' to view your closed issues");
-						}
-						}
+				if(args.length == 1){
+					sender.sendMessage(ChatColor.RED + "Please type '/issue view <ID>' or '/issue view closed'");
+					return true;
 				}
-				else if(args.length == 3 && !sender.hasPermission("issuetracker.admin")){
-					if(args[1].equalsIgnoreCase("closed") || args[1].equalsIgnoreCase("close")){
-						try {				
-							//Calling the SELECT query for status
-							sqlExec.viewCloseQuery();
-							//Pulls each row of the database. Displays each row
-							while (SQLExecutors.selectSQL.next()) {
-								try{
-									reason = shortenIssue(SQLExecutors.selectSQL.getString("reason"));
-									} catch (SQLException e) {
-										e.printStackTrace();
-									}
-								pageString = pageString + ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("issue_id") + ChatColor.BLUE + " - " + ChatColor.GOLD + reason + "\n";
-								}
-							//Close database connection
-								SQLExecutors.dbClose();
-								if(letterCheck(args[2]) == true) { //use a method that checks argument for invalid characters (anything but numbers)
-									sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
-									return true;
-								}
-
-								int userPage = Integer.parseInt(args[2]); //now that we know the first arg is a number, make it into an Int
-
-								if(userPage <= pageTotal()) { //as long as the given user page number is less than or equal to the total pages paginated from first string.
-									pageSenderClosed(sender, userPage); //use method to send pages
-									return true;
-								}
-								if(userPage > pageTotal()) { // if given user page number is more than the total page number.
-									sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
-									return true;
-								}
-								return false;	
-								} 	
-						catch (SQLException e) {
-							e.printStackTrace();
-							}
+				//Player trigger conditions
+				if(!sender.hasPermission("issuetracker.admin")){
+					if(args.length == 2 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
+						Issue[] closedIssues = IM.getClosedIssues(sender.getName());
+						for(int i = 0; i < closedIssues.length; i++){
+							pageString = pageString + IM.convertIssueToMessage(closedIssues[i], auth);
 						}
-					else {
-						sender.sendMessage(ChatColor.RED + "Please type '/issue view closed' to view your closed issues");
+						pageSenderClosed(sender, 1);
+						return true;
 					}
 				}
-				else if(sender.hasPermission("issuetracker.admin")){
-					if(args.length == 2){
-						issueID = args[1];
-						try{
-							@SuppressWarnings("unused")
-							int temp = Integer.parseInt(issueID);
-							
-							sqlExec.adminIssueQuery();
-							if(!SQLExecutors.selectSQL.next()){
-								sender.sendMessage(ChatColor.RED + "No issues found. Did you type the issue ID correctly?");
-							}
-							else{
-							SQLExecutors.selectSQL.beforeFirst();
-							while (SQLExecutors.selectSQL.next()) {
-								
-									if(SQLExecutors.selectSQL.getInt("status") == 1){
-										setStatus = "Open";
-									}
-									else if (SQLExecutors.selectSQL.getInt("status") == 2){
-										setStatus = "Reviewed";
-									}
-									else if (SQLExecutors.selectSQL.getInt("status") == 3){
-										setStatus = "Closed";
-									}
-									sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ChatColor.BLUE + "*******" ); //header of view issue
-								    sender.sendMessage(ChatColor.BLUE + "Player: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("player") + ChatColor.BLUE + " - Status: " + ChatColor.GOLD + setStatus + ChatColor.BLUE + "\nIssue: " + ChatColor.GOLD + SQLExecutors.selectSQL.getString("reason"));
-							}
-							SQLExecutors.dbClose();
-							}
-						}
-						catch(Exception ex){
-						sender.sendMessage(ChatColor.RED + "Please type '/issue view closed' or '/issue view <issue ID>' to view your closed issues");
-						}
-				
+				if(args.length == 2){
+					int issueID;
+					try{
+						issueID = Integer.parseInt(args[1]); 
+					} catch (Exception e){sender.sendMessage("Please enter a valid ID number!"); return true;}
+					Issue viewIssue = IM.getIssue(issueID);
+					if(!sender.hasPermission("issuetracker.admin") && !viewIssue.getPlayer().equalsIgnoreCase(sender.getName())){
+						sender.sendMessage(ChatColor.RED + "You may not view an issue you do not own!");
+						return true;
 					}
-					else if(args.length == 3){
-						if (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed")){
-							try {				
-								closePlayer = args[2];
-								//Calling the SELECT query for status
-								sqlExec.adminCloseQuery();
-								//Pulls each row of the database. Displays each row
-								if(!SQLExecutors.selectSQL.next()){
-									sender.sendMessage(ChatColor.RED + "No issues found. Did you type the player name correctly?");
-								}
-								else{
-								SQLExecutors.selectSQL.beforeFirst();
-								while (SQLExecutors.selectSQL.next()) {
-									try{
-										reason = shortenIssue(SQLExecutors.selectSQL.getString("reason"));
-										} catch (SQLException e) {
-											e.printStackTrace();
-										}
-									 pageString = pageString + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + "\n";
-								}
-								SQLExecutors.dbClose();
-								pageSenderAdminClosed(sender, 1);
-								} 	
-							}
-							catch (SQLException e) {
-								sender.sendMessage("No closed issues found for player " + closePlayer);
-								}
-						} //if args 1 = close/closed
-						else {
-							sender.sendMessage(ChatColor.RED + "Please enter a valid player ID. Type '/issue view closed <player>");
-						}
+					sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue " + issueID + "for " + viewIssue.getPlayer() + ChatColor.BLUE + "*******" );
+					sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GOLD + viewIssue.getStatusStr() + ChatColor.BLUE + " Reason: " + ChatColor.GOLD + viewIssue.getReason()); 
+					return true;
+				}	
+				else if(args.length == 3 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
+					String pageNumber;
+					if(!sender.hasPermission("issuetracker.admin")){
+						closePlayer = sender.getName();
+						pageNumber = args[2];
 					}
-					else if(args.length == 4){
-						if (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed")){
-							try {				
-								closePlayer = args[2];
-								//Calling the SELECT query for status
-								sqlExec.adminCloseQuery();
-								//Pulls each row of the database. Displays each row
-								if(!SQLExecutors.selectSQL.next()){
-									sender.sendMessage(ChatColor.RED + "No issues found. Did you type the player name correctly?");
-								}
-								else{
-								SQLExecutors.selectSQL.beforeFirst();
-								while (SQLExecutors.selectSQL.next()) {
-									try{
-										if(SQLExecutors.selectSQL.getString("reason").length() > 45){
-											reason = SQLExecutors.selectSQL.getString("reason").substring(0,45) + "...";
-										}
-										else{
-											reason = SQLExecutors.selectSQL.getString("reason");
-										}
-										}
-									catch (SQLException e) {
-											e.printStackTrace();
-										}
-									 pageString = pageString + ChatColor.BLUE + "> Issue #" + SQLExecutors.selectSQL.getString("issue_ID") + ": " + ChatColor.GOLD + reason + "\n";
-									}
-								SQLExecutors.dbClose();
-								if(letterCheck(args[3]) == true) { //use a method that checks argument for invalid characters (anything but numbers)
-									sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
-									return true;
-								}
-								int userPage = Integer.parseInt(args[3]); //now that we know the first arg is a number, make it into an Int
-								if(userPage <= pageTotal()) { //as long as the given user page number is less than or equal to the total pages paginated from first string.
-									pageSenderAdminClosed(sender, userPage); //use method to send pages
-									return true;
-								}
-								if(userPage > pageTotal()) { // if given user page number is more than the total page number.
-									sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
-									return true;
-								}
-								return false;
-								} 	
-							}
-							catch (SQLException e) {
-								sender.sendMessage("No closed issues found for player " + closePlayer);
-								}
-						} //if args 1 = close/closed
-						else {
-							sender.sendMessage(ChatColor.RED + "Please enter a valid issue ID. Type '/issue view closed <player>");
-						}
+					else{
+						closePlayer = args[2];
+						pageNumber = "1";
 					}
-					else {
-						sender.sendMessage(ChatColor.RED + "You must enter a valid players name: /issue view closed <player>");
+					Issue[] closedIssues = IM.getClosedIssues(closePlayer);
+					for(int i = 0; i < closedIssues.length; i++){
+						pageString = pageString + IM.convertIssueToMessage(closedIssues[i], auth);
 					}
-				}
-				else {
-					sender.sendMessage(ChatColor.RED + "You do not have permissions to use this!");
-				}
-			}
+					paginationCheck(sender, pageNumber, "closed");
+					return true;
+				}	
+				else if(sender.hasPermission("issuetracker.admin") && args.length == 4 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
+					Issue[] closedIssues = IM.getClosedIssues(args[2]);
+					for(int i = 0; i < closedIssues.length; i++){
+						pageString = pageString + IM.convertIssueToMessage(closedIssues[i], auth);
+					}
+					paginationCheck(sender, args[3], "closed");
+					return true;
+				}	
+			} //End /issue view
 			//If none of the triggers are hit - tell them how to view correct syntax
 			else {
 				sender.sendMessage("Please type /issue for help.");
@@ -436,7 +270,7 @@ public class IssueCommand implements CommandExecutor{
         return false;
 	}	
 	
-	public boolean paginationCheck(CommandSender sender, String testPage){
+	public boolean paginationCheck(CommandSender sender, String testPage, String type){
 
 		if (letterCheck(testPage) == true){
 			sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
@@ -445,9 +279,16 @@ public class IssueCommand implements CommandExecutor{
 		int userPage = Integer.parseInt(testPage);
 
 		if(userPage <= pageTotal()) {
-			pageSenderOpen(sender, userPage);
-			return true;
+			if(type.equalsIgnoreCase("open")){
+				pageSenderOpen(sender, userPage);
+				return true;
+			}
+			else{
+				pageSenderClosed(sender,userPage);
+				return true;
+			}
 		}
+			
 		if(userPage > pageTotal()){
 			sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
 			return true;

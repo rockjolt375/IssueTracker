@@ -51,25 +51,24 @@ public class cIssueTracker extends JavaPlugin{
 			logger.severe(String.format("[IssueTracker] - Default configuration detected. Please configure your database information!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
 		}
-		
 		//Fills SQL connection variables
 		else {
 			getDBInfo();
-		}
-		
-		//Checks for database table itrack_issuetracker
-		try {
-			sqlExec.CreateTable();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		//prepares the /issue commands
-		this.getCommand("issue").setExecutor(new IssueCommand(this));
-		//Enables the Listener for mod joins
-		 getServer().getPluginManager().registerEvents(new IssueTrackerListener(), this);
-	}
 
+			try {
+				//Checks for database table itrack_issuetracker
+				sqlExec.CreateTable();
+				
+				//prepares the /issue commands
+				this.getCommand("issue").setExecutor(new IssueCommand(this));
+				//Enables the Listener for mod joins
+				 getServer().getPluginManager().registerEvents(new IssueTrackerListener(), this);
+			} catch (SQLException e) {
+				logger.severe(String.format("[IssueTracker] - Couldn't connect to database!", getDescription().getName()));
+				getServer().getPluginManager().disablePlugin(this);		
+			}
+		}	
+	}
 	//Disables the plugin
 	public void onDisable() {
 		this.logMessage("Disabled.");

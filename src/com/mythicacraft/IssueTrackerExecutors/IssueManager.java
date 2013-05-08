@@ -10,7 +10,7 @@ import org.bukkit.command.CommandSender;
 public class IssueManager {
 	
 	SQLExecutors SQLExec = new SQLExecutors();
-	ArrayList<Integer> issueList = new ArrayList<Integer>();
+	ArrayList<Issue> issueArray = new ArrayList<Issue>();
 	
 	public Issue getIssue(int issue_ID){
 		Issue oldIssue = new Issue(issue_ID);
@@ -27,17 +27,16 @@ public class IssueManager {
 		try {
 			ResultSet sqlResult = SQLExec.statusQuery(sqlQuery);
 			while(sqlResult.next()){
-			issueList.add(sqlResult.getInt("issue_id")); //Adds issue_ID into ArrayList
+				Issue issue = new Issue(sqlResult.getString("player"), sqlResult.getInt("status"), sqlResult.getInt("issue_id"), sqlResult.getString("reason"));
+				issueArray.add(issue); //Adds issue_ID into ArrayList
 			}
-			SQLExec.dbClose(); //Closes database connection
+			SQLExec.dbClose(); //Closes database
 		} catch (SQLException e) {e.printStackTrace();}
-		
-		//Creates object array using Issue(int issue_ID)
-		Issue[] allIssues = new Issue[issueList.size()];
-		for(int i = 0; i < issueList.size(); i++) {
-			allIssues[i] = new Issue(issueList.get(i));			
+		Issue [] openIssues = new Issue[issueArray.size()];
+		for(int i = 0; i < issueArray.size(); i++) {
+		     openIssues[i] = issueArray.get(i);
 		}
-		return allIssues;
+		return openIssues;
 	}
 	
 	public Issue[] getOpenIssues(String playerName){
@@ -45,17 +44,16 @@ public class IssueManager {
 		try {
 			ResultSet sqlResult = SQLExec.statusQuery(sqlQuery);
 			while(sqlResult.next()){
-			issueList.add(sqlResult.getInt("issue_id")); //Adds issue_ID into ArrayList
+				Issue issue = new Issue(sqlResult.getString("player"), sqlResult.getInt("status"), sqlResult.getInt("issue_id"), sqlResult.getString("reason"));
+				issueArray.add(issue); //Adds issue_ID into ArrayList
 			}
-			SQLExec.dbClose(); //Closes database connection
+			SQLExec.dbClose(); //Closes database
 		} catch (SQLException e) {e.printStackTrace();}
-		
-		//Creates object array using Issue(int issue_ID)
-		Issue[] allIssues = new Issue[issueList.size()];
-		for(int i = 0; i < issueList.size(); i++) {
-			allIssues[i] = new Issue(issueList.get(i));			
+		Issue [] openIssues = new Issue[issueArray.size()];
+		for(int i = 0; i < issueArray.size(); i++) {
+		     openIssues[i] = issueArray.get(i);
 		}
-		return allIssues;
+		return openIssues;
 	}
 	
 	public Issue[] getClosedIssues(){
@@ -63,15 +61,14 @@ public class IssueManager {
 		try {
 			ResultSet sqlResult = SQLExec.closeQuery(sqlQuery);
 			while(sqlResult.next()){
-			issueList.add(sqlResult.getInt("issue_id")); //Adds issue_ID into ArrayList
+				Issue issue = new Issue(sqlResult.getString("player"), sqlResult.getInt("status"), sqlResult.getInt("issue_id"), sqlResult.getString("reason"));
+				issueArray.add(issue); //Adds issue_ID into ArrayList
 			}
-			SQLExec.dbClose(); //Closes database connection
+			SQLExec.dbClose(); //Closes database
 		} catch (SQLException e) {e.printStackTrace();}
-		
-		//Creates object array using Issue(int issue_ID)
-		Issue[] closedIssues = new Issue[issueList.size()];
-		for(int i = 0; i < issueList.size(); i++) {
-			closedIssues[i] = new Issue(issueList.get(i));			
+		Issue [] closedIssues = new Issue[issueArray.size()];
+		for(int i = 0; i < issueArray.size(); i++) {
+		     closedIssues[i] = issueArray.get(i);
 		}
 		return closedIssues;
 	}
@@ -81,15 +78,14 @@ public class IssueManager {
 		try {
 			ResultSet sqlResult = SQLExec.closeQuery(sqlQuery);
 			while(sqlResult.next()){
-			issueList.add(sqlResult.getInt("issue_id")); //Adds issue_ID into ArrayList
+				Issue issue = new Issue(sqlResult.getString("player"), sqlResult.getInt("status"), sqlResult.getInt("issue_id"), sqlResult.getString("reason"));
+				issueArray.add(issue); //Adds issue_ID into ArrayList
 			}
-			SQLExec.dbClose(); //Closes database connection
+			SQLExec.dbClose(); //Closes database
 		} catch (SQLException e) {e.printStackTrace();}
-		
-		//Creates object array using Issue(int issue_ID)
-		Issue[] closedIssues = new Issue[issueList.size()];
-		for(int i = 0; i < issueList.size(); i++) {
-			closedIssues[i] = new Issue(issueList.get(i));			
+		Issue [] closedIssues = new Issue[issueArray.size()];
+		for(int i = 0; i < issueArray.size(); i++) {
+		     closedIssues[i] = issueArray.get(i);
 		}
 		return closedIssues;
 	}
@@ -102,7 +98,7 @@ public class IssueManager {
 		else{
 			issueMessage = ChatColor.BLUE + "Issue " + issueID + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + player + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status + "\n ";
 		}
-		return issueMessage;		
+		return issueMessage;
 	}
 	
 	public String shortenIssue(String issueReason){
