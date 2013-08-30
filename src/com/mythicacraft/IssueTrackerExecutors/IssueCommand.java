@@ -1,16 +1,10 @@
 package com.mythicacraft.IssueTrackerExecutors;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.util.ChatPaginator;
-import org.bukkit.util.ChatPaginator.ChatPage;
-
 
 import com.mythicacraft.IssueTracker.cIssueTracker;
 
@@ -70,10 +64,14 @@ public class IssueCommand implements CommandExecutor{
 					else{
 						openIssues = IM.getOpenIssues();
 					}
-					for(int i = 0; i < openIssues.length; i++){
-						pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
+					if(!openIssues[0].exists()){
+						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
+						return true;
 					}
-					pageSenderOpen(sender, 1);
+					String pageMessage = IM.issueToMessage(openIssues, sender, auth);
+					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
+					
+					pageIssue.sendPage("1", sender, "Viewing all Open/Reviewed Issues");
 				}
 				else if(args.length == 2){
 					//If-Else triggers getter method for correct permission level
@@ -83,10 +81,14 @@ public class IssueCommand implements CommandExecutor{
 					else{
 					openIssues = IM.getOpenIssues();
 					}
-					for(int i = 0; i < openIssues.length; i++){
-						pageString = pageString + IM.convertIssueToMessage(openIssues[i], auth);
+					if(!openIssues[0].exists()){
+						sender.sendMessage(ChatColor.GOLD + "No issues exist!");
+						return true;
 					}
-					paginationCheck(sender, args[1], "open");
+					String pageMessage = IM.issueToMessage(openIssues, sender, auth);
+					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
+					
+					pageIssue.sendPage(args[1], sender, "Viewing All Open/Reviewed Issues");
 					}
 				else{ //Triggers if issuetracker permissions are not set
 					sender.sendMessage(ChatColor.RED + "You do not have permissions to use this command!");
@@ -151,7 +153,7 @@ public class IssueCommand implements CommandExecutor{
 						return true;
 					}
 					closeIssue.setStatus(issueID, 3);
-					sender.sendMessage(ChatColor.GREEN + "You have successfully closed your issue!");
+					sender.sendMessage(ChatColor.GREEN + "You have successfully closed an issue!");
 				}
 				else {
 					sender.sendMessage(ChatColor.RED + "Please type '/issue close <issue_ID>' to close an issue.");
@@ -167,12 +169,17 @@ public class IssueCommand implements CommandExecutor{
 				if(!sender.hasPermission("issuetracker.admin")){
 					if(args.length == 2 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
 						Issue[] closedIssues = IM.getClosedIssues(sender.getName());
-						for(int i = 0; i < closedIssues.length; i++){
-							pageString = pageString + IM.convertIssueToMessage(closedIssues[i], auth);
+						if(!closedIssues[0].exists()){
+							sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
+							return true;
 						}
-						pageSenderClosed(sender, 1);
+						String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
+						PaginateIssue pageIssue = new PaginateIssue(pageMessage);
+						
+						pageIssue.sendPage("1", sender, "Viewing All Closed Issues");
 						return true;
 					}
+					sender.sendMessage(ChatColor.RED + "Please type '/issue view closed' to view your closed issues");
 				}
 				if(args.length == 2){
 					int issueID;
@@ -184,7 +191,7 @@ public class IssueCommand implements CommandExecutor{
 						sender.sendMessage(ChatColor.RED + "You may not view an issue you do not own!");
 						return true;
 					}
-					sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue " + issueID + "for " + viewIssue.getPlayer() + ChatColor.BLUE + "*******" );
+					sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue " + issueID + " for " + viewIssue.getPlayer() + ChatColor.BLUE + "*******" );
 					sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GOLD + viewIssue.getStatusStr() + ChatColor.BLUE + " Reason: " + ChatColor.GOLD + viewIssue.getReason()); 
 					return true;
 				}	
@@ -199,18 +206,27 @@ public class IssueCommand implements CommandExecutor{
 						pageNumber = "1";
 					}
 					Issue[] closedIssues = IM.getClosedIssues(closePlayer);
-					for(int i = 0; i < closedIssues.length; i++){
-						pageString = pageString + IM.convertIssueToMessage(closedIssues[i], auth);
+					if(!closedIssues[0].exists()){
+						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
+						return true;
 					}
-					paginationCheck(sender, pageNumber, "closed");
+					String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
+					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
+					
+					pageIssue.sendPage(pageNumber, sender, "Viewing All Closed Issues");
+					
 					return true;
 				}	
 				else if(sender.hasPermission("issuetracker.admin") && args.length == 4 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
 					Issue[] closedIssues = IM.getClosedIssues(args[2]);
-					for(int i = 0; i < closedIssues.length; i++){
-						pageString = pageString + IM.convertIssueToMessage(closedIssues[i], auth);
+					if(!closedIssues[0].exists()){
+						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
+						return true;
 					}
-					paginationCheck(sender, args[3], "closed");
+					String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
+					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
+					
+					pageIssue.sendPage(args[3], sender, "Viewing All Closed Issues");
 					return true;
 				}	
 			} //End /issue view
@@ -222,6 +238,7 @@ public class IssueCommand implements CommandExecutor{
 		}
 		return true;
 		}
+	
 	public void playerNotification(String pName){
 		try{
 		Player player = plugin.getServer().getPlayer(pName);
@@ -232,78 +249,5 @@ public class IssueCommand implements CommandExecutor{
 			ex.printStackTrace();
 		}
 	}
-	
-	public void pageSenderOpen(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
-        ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
-	    String[] pages = message.getLines(); //puts the lines from the page into a string array
-	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Open/Reviewed Statuses " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
-	    sender.sendMessage(pages); //send page string array
-	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
-		    int nextPage = pageNumber + 1;
-		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue status " + nextPage + "\" for next page." + ChatColor.BLUE + "*******");
-	    }
-	    pageString = "";
-	}
-	public void pageSenderClosed(CommandSender sender, int pageNumber) { //method to send pages, accepts the sender object and the user given page number
-        ChatPage message = ChatPaginator.paginate(pageString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
-	    String[] pages = message.getLines(); //puts the lines from the page into a string array
-	    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "All Closed Issues For: " + closePlayer + ChatColor.GOLD + " Page " + pageNumber + "/" + pageTotal() + ChatColor.BLUE + "*******" ); //header of page with current and total pages
-	    sender.sendMessage(pages); //send page string array
-	    if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
-		    int nextPage = pageNumber + 1;
-		    sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Type \"/issue view closed <player> " + nextPage + ChatColor.BLUE + "*******");
-	    }
-	    pageString = "";
-	}
 
-	public int pageTotal() { //returns an Int of total pages
-	    ChatPage message = ChatPaginator.paginate(pageString, 1, 53, 8);
-	    int totalPages = message.getTotalPages();
-	    return totalPages;
-	}
-	public boolean letterCheck(String args) { //uses a regex to check for anything that ISN'T a number
-        Pattern checkRegex = Pattern.compile("[\\D]");
-        Matcher regexMatcher = checkRegex.matcher(args);
-        if(regexMatcher.find()) {
-    	return true;
-        }
-        return false;
-	}	
-	
-	public boolean paginationCheck(CommandSender sender, String testPage, String type){
-
-		if (letterCheck(testPage) == true){
-			sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
-			return true;
-		}
-		int userPage = Integer.parseInt(testPage);
-
-		if(userPage <= pageTotal()) {
-			if(type.equalsIgnoreCase("open")){
-				pageSenderOpen(sender, userPage);
-				return true;
-			}
-			else{
-				pageSenderClosed(sender,userPage);
-				return true;
-			}
-		}
-			
-		if(userPage > pageTotal()){
-			sender.sendMessage(ChatColor.RED + "That is not a valid page number!");
-			return true;
-			}
-		return false;
-	}
-	
-	public String shortenIssue(String issueReason){
-		if(issueReason.length() < 45){
-			return issueReason;
-		}
-		else {
-			String shortReason = issueReason.substring(0,45) + "...";
-			return shortReason;
-		}
-	}
-
-}
+} //End class

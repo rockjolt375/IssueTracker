@@ -19,8 +19,9 @@ public class Issue {
 	
 //Create Issue Constructor Method
 	Issue(CommandSender sender, String reason) {
+		player = sender.getName();
 		try {
-			SQLExec.createQuery(sender, reason); //Insert new issue to database
+			SQLExec.createQuery(player, reason); //Insert new issue to database
 		} catch (SQLException e) {e.printStackTrace();}
 	}
 	
@@ -31,6 +32,7 @@ public class Issue {
 		this.statusID = statusID;
 		this.status = switchStatus(statusID);
 		this.reason = reason;
+		exists = true;
 	}
 	
 	

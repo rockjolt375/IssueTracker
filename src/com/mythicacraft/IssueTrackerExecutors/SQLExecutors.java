@@ -9,8 +9,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Logger;
 
-import org.bukkit.command.CommandSender;
-
 import com.mythicacraft.IssueTracker.cIssueTracker;
 
 public class SQLExecutors {
@@ -38,7 +36,7 @@ public class SQLExecutors {
     }
   
 	//For /issue create
-	public void createQuery(CommandSender sender, String reason) throws SQLException { 
+	public void createQuery(String sender, String reason) throws SQLException { 
 		dbConnect();
 		sampleQueryStatement = conn.prepareStatement("INSERT INTO itrack_issuetracker (player, status, reason) VALUES ('"+ sender + "', 1, '"+ reason + "')"); //Put your query in the quotes
 		sampleQueryStatement.executeUpdate(); //Executes the query

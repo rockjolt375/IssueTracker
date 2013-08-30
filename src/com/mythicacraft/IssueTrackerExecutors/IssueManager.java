@@ -10,7 +10,6 @@ import org.bukkit.command.CommandSender;
 public class IssueManager {
 	
 	SQLExecutors SQLExec = new SQLExecutors();
-	ArrayList<Issue> issueArray = new ArrayList<Issue>();
 	
 	public Issue getIssue(int issue_ID){
 		Issue oldIssue = new Issue(issue_ID);
@@ -23,6 +22,7 @@ public class IssueManager {
 	}
 		
 	public Issue[] getOpenIssues(){
+		ArrayList<Issue> issueArray = new ArrayList<Issue>();
 		String sqlQuery = "IS NOT NULL"; //Sets the query parameters for all open/reviewed issues without player restriction
 		try {
 			ResultSet sqlResult = SQLExec.statusQuery(sqlQuery);
@@ -40,6 +40,7 @@ public class IssueManager {
 	}
 	
 	public Issue[] getOpenIssues(String playerName){
+		ArrayList<Issue> issueArray = new ArrayList<Issue>();
 		String sqlQuery = "= '" + playerName + "'"; //Sets the query parameters for all open/reviewed issues for specified player
 		try {
 			ResultSet sqlResult = SQLExec.statusQuery(sqlQuery);
@@ -57,6 +58,7 @@ public class IssueManager {
 	}
 	
 	public Issue[] getClosedIssues(){
+		ArrayList<Issue> issueArray = new ArrayList<Issue>();
 		String sqlQuery = "IS NOT NULL"; //Sets the query parameters for all open/reviewed issues without player restriction
 		try {
 			ResultSet sqlResult = SQLExec.closeQuery(sqlQuery);
@@ -74,6 +76,7 @@ public class IssueManager {
 	}
 	
 	public Issue[] getClosedIssues(String playerName){
+		ArrayList<Issue> issueArray = new ArrayList<Issue>();
 		String sqlQuery = "= '" + playerName + "'"; //Sets the query parameters for all open/reviewed issues for specified player
 		try {
 			ResultSet sqlResult = SQLExec.closeQuery(sqlQuery);
@@ -99,6 +102,14 @@ public class IssueManager {
 			issueMessage = ChatColor.BLUE + "Issue " + issueID + ": " + ChatColor.GOLD + reason + ChatColor.BLUE + "\n     " + ChatColor.DARK_GRAY + "Player: " + ChatColor.GRAY + player + ChatColor.DARK_GRAY + " - Status: " + ChatColor.GRAY + status + "\n ";
 		}
 		return issueMessage;
+	}
+	
+	public String issueToMessage (Issue[] issue, CommandSender sender, String auth){
+		String pageString = "";
+		for(int i = 0; i < issue.length; i++){
+			pageString = pageString + convertIssueToMessage(issue[i], auth);
+		}
+		return pageString;
 	}
 	
 	public String shortenIssue(String issueReason){
