@@ -26,7 +26,6 @@ public class cIssueTracker extends JavaPlugin{
 	
 //**********ENABLE/DISABLE METHODS**************
 	public void onEnable() {
-		this.logMessage("Enabled.");
 		
 		//*******CREATES PLUGIN DIRECTORY AND TXT STORAGE FILE*********
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
@@ -43,11 +42,11 @@ public class cIssueTracker extends JavaPlugin{
 			this.getConfig().addDefault("MySql.dbase", "database");
 			this.getConfig().options().copyDefaults(true);
 			this.saveConfig();
-			logger.severe(String.format("[IssueTracker] - Disabled due to no database information configured!", getDescription().getName()));
+			logger.severe(String.format("[IssueTracker] - Default Configuration found...disabling!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
 			}
 		//If config exists but has not been edited
-		else if (file.exists() && this.getConfig().getString("MySql.host") == "hostname"){
+		else if (file.exists() && this.getConfig().getString("MySql.host").equalsIgnoreCase("hostname")){
 			logger.severe(String.format("[IssueTracker] - Default configuration detected. Please configure your database information!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
 		}
@@ -68,6 +67,7 @@ public class cIssueTracker extends JavaPlugin{
 				getServer().getPluginManager().disablePlugin(this);		
 			}
 		}	
+		this.logMessage("Enabled.");
 	}
 	//Disables the plugin
 	public void onDisable() {
