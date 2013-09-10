@@ -1,6 +1,8 @@
 package com.mythicacraft.IssueTrackerExecutors;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -64,12 +66,11 @@ public class IssueCommand implements CommandExecutor{
 					else{
 						openIssues = IM.getOpenIssues();
 					}
-					if(!openIssues[0].exists()){
-						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
-						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE+ "No issues exist for " + closePlayer);
+					if(openIssues.length < 1){
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE+ "There are no unresolved issues!");
 						return true;
 					}
-					String pageMessage = IM.issueToMessage(openIssues, sender, auth);
+					String pageMessage = IM.issuesToMessage(openIssues, auth);
 					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
 					
 					pageIssue.sendPage("1", sender, "Viewing all Open/Reviewed Issues");
@@ -82,23 +83,22 @@ public class IssueCommand implements CommandExecutor{
 					else{
 					openIssues = IM.getOpenIssues();
 					}
-					if(!openIssues[0].exists()){
-						sender.sendMessage(ChatColor.GOLD + "No issues exist!");
-						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "No issues exist!");
+					if(openIssues.length < 1){
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE + "No issues exist!");
 						return true;
 					}
-					String pageMessage = IM.issueToMessage(openIssues, sender, auth);
+					String pageMessage = IM.issuesToMessage(openIssues, auth);
 					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
 					
 					pageIssue.sendPage(args[1], sender, "Viewing All Open/Reviewed Issues");
 					}
 				else{ //Triggers if issuetracker permissions are not set
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "You do not have permissions to use this command!");
+					sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "You do not have permissions to use this command!");
 					}
 				}
 			else if(args[0].equalsIgnoreCase("set")){
 				if(!sender.hasPermission("issuetracker.admin")){
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "You do not have permissions for this command!");
+					sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "You do not have permissions for this command!");
 				}
 				else if(sender.hasPermission("issuetracker.admin")){
 				//if '/issue status # <close/closed/reviewed>' is typed
@@ -106,15 +106,20 @@ public class IssueCommand implements CommandExecutor{
 					if(args[2].equalsIgnoreCase("close") || args[2].equalsIgnoreCase("closed") || args[2].equalsIgnoreCase("reviewed")){
 						try{
 							issueID = Integer.parseInt(args[1]);
-						} catch (Exception e){ sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "That is not a valid issue ID!"); return true;}
+						} catch (Exception e){ sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "That is not a valid issue ID!"); return true;}
 						Issue setIssue = IM.getIssue(issueID);
+						
+						if(!setIssue.exists()){
+							sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "That is not a valid issue!");
+							return true;
+						}
 						setIssue.setStatus(issueID, setIssue.switchStatus(args[2]));
 						playerNotification(setIssue.getPlayer());
 						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.GREEN + "The issue's status has been updated!");
 						}
 					else {
 						//if the format was wrong
-						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please enter an appropriate issue status. (Close or Reviewed)");
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "Please enter an appropriate issue status. (Close or Reviewed)");
 						}
 				}
 			} //Close if status # close/reviewed is typed
@@ -128,7 +133,7 @@ public class IssueCommand implements CommandExecutor{
 					issueReason = issueReason.substring(1);
 					
 					IM.createIssue(sender, issueReason);
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.GREEN + "Your issue has successfully been submitted. A moderator will review it as soon as possible. You may type '/issue status' to view the status of your issues.");
+					sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.GREEN + "Your issue has successfully been submitted. A moderator will review it as soon as possible. You may type '/issue status' to view the status of your issues.");
 
 					for(Player mod: plugin.getServer().getOnlinePlayers()) {    
 		                if(mod.hasPermission("issuetracker.admin")) {      
@@ -137,7 +142,7 @@ public class IssueCommand implements CommandExecutor{
 		            	}	
 				 	}
 				 else {
-					 sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please type '/issue create <message>' to submit an issue.");
+					 sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "Please type '/issue create <message>' to submit an issue.");
 				 }
 				}
 			//Triggers when /issue close is typed
@@ -148,75 +153,70 @@ public class IssueCommand implements CommandExecutor{
 					try{
 						issueID = Integer.parseInt(args[1]);
 					}
-					catch(Exception e){ sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please enter a valid issue ID! Type '/issue status' to view your issue"); return true;}
+					catch(Exception e){ sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "Please enter a valid issue ID! Type '/issue status' to view your issue"); return true;}
 					Issue closeIssue = IM.getIssue(issueID);
 					
 					if(!player.equalsIgnoreCase(closeIssue.getPlayer())){
-						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "You can't close another player's issue!");
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "You can't close another player's issue!");
 						return true;
 					}
 					closeIssue.setStatus(issueID, 3);
-					sender.sendMessage(ChatColor.GREEN + "You have successfully closed an issue!");
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.GREEN + "You have successfully closed an issue!");
+					sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.GREEN + "You have successfully closed an issue!");
 				}
 				else {
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please type '/issue close <issue_ID>' to close an issue.");
+					sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "Please type '/issue close <issue_ID>' to close an issue.");
 				}
 			}
 			//When a player types '/issue view closed' do...
 			else if(args[0].equalsIgnoreCase("view")){
 				if(args.length == 1){
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please type '/issue view <ID>' or '/issue view closed'");
+					sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "Please type '/issue view <ID>' or '/issue view closed'");
 					return true;
 				}
 				//Player trigger conditions
-				if(!sender.hasPermission("issuetracker.admin")){
-					if(args.length == 2 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
-						Issue[] closedIssues = IM.getClosedIssues(sender.getName());
-						if(!closedIssues[0].exists()){
-							sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
-							sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "No issues exist for " + closePlayer);
-							return true;
-						}
-						String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
-						PaginateIssue pageIssue = new PaginateIssue(pageMessage);
-						
-						pageIssue.sendPage("1", sender, "Viewing All Closed Issues");
+				else if(args.length == 2 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
+					Issue[] closedIssues = IM.getClosedIssues(sender.getName());
+					if(closedIssues.length < 1){
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE + "No issues exist for " + closePlayer);
 						return true;
 					}
-					sender.sendMessage(ChatColor.RED + "Please type '/issue view closed' to view your closed issues");
-					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please type '/issue view closed' to view your closed issues");
+					String pageMessage = IM.issuesToMessage(closedIssues, auth);
+					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
+						
+					pageIssue.sendPage("1", sender, "Viewing All Closed Issues");
+					return true;
 				}
-				if(args.length == 2){
+				else if(args.length == 2){
 					int issueID;
 					try{
-						issueID = Integer.parseInt(args[1]); 
-					} catch (Exception e){sender.sendMessage("Please enter a valid ID number!"); return true;}
-					Issue viewIssue = IM.getIssue(issueID);
-					if(!sender.hasPermission("issuetracker.admin") && !viewIssue.getPlayer().equalsIgnoreCase(sender.getName())){
-						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "You may not view an issue you do not own!");
+						issueID = Integer.parseInt(args[1]);
+						Issue viewIssue = IM.getIssue(issueID);
+						if(!sender.hasPermission("issuetracker.admin") && !viewIssue.getPlayer().equalsIgnoreCase(sender.getName())){
+							sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "You may not view an issue you do not own!");
+							return true;
+						}
+						sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue " + issueID + " for " + viewIssue.getPlayer() + ChatColor.BLUE + "*******" );
+						sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GRAY + viewIssue.getStatusStr() + ChatColor.BLUE + " Reason: " + ChatColor.GOLD + viewIssue.getReason()); 
 						return true;
-					}
-					sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue " + issueID + " for " + viewIssue.getPlayer() + ChatColor.BLUE + "*******" );
-					sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GRAY + viewIssue.getStatusStr() + ChatColor.BLUE + " Reason: " + ChatColor.GOLD + viewIssue.getReason()); 
-					return true;
+					} catch (Exception e){sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "Please enter a valid ID number!"); return true;}
 				}	
 				else if(args.length == 3 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
 					String pageNumber;
-					if(!sender.hasPermission("issuetracker.admin")){
-						closePlayer = sender.getName();
-						pageNumber = args[2];
-					}
-					else{
+					OfflinePlayer possiblePlayer = Bukkit.getOfflinePlayer(args[2]);
+					if(possiblePlayer.hasPlayedBefore()) {
 						closePlayer = args[2];
 						pageNumber = "1";
 					}
+					else{
+						closePlayer = sender.getName();
+						pageNumber = args[2];
+					}
 					Issue[] closedIssues = IM.getClosedIssues(closePlayer);
-					if(!closedIssues[0].exists()){
-						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
+					if(closedIssues.length < 1){
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE + "No issues exist for " + closePlayer);
 						return true;
 					}
-					String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
+					String pageMessage = IM.issuesToMessage(closedIssues, auth);
 					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
 					
 					pageIssue.sendPage(pageNumber, sender, "Viewing All Closed Issues");
@@ -225,12 +225,11 @@ public class IssueCommand implements CommandExecutor{
 				}	
 				else if(sender.hasPermission("issuetracker.admin") && args.length == 4 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
 					Issue[] closedIssues = IM.getClosedIssues(args[2]);
-					if(!closedIssues[0].exists()){
-						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
-						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "No issues exist for " + closePlayer);
+					if(closedIssues.length < 1){
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE + "No issues exist for " + closePlayer);
 						return true;
 					}
-					String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
+					String pageMessage = IM.issuesToMessage(closedIssues, auth);
 					PaginateIssue pageIssue = new PaginateIssue(pageMessage);
 					
 					pageIssue.sendPage(args[3], sender, "Viewing All Closed Issues");
@@ -239,7 +238,7 @@ public class IssueCommand implements CommandExecutor{
 			} //End /issue view
 			//If none of the triggers are hit - tell them how to view correct syntax
 			else {
-				sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "Please type /issue for help.");
+				sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE + "Please type /issue for help.");
 				}
 			}
 		}

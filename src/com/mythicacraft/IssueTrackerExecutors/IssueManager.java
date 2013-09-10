@@ -94,7 +94,7 @@ public class IssueManager {
 	}
 	
 	public String convertIssueToMessage(Issue issue, String auth) {
-		String issueMessage = "", reason = shortenIssue(issue.getReason()), player = issue.getPlayer(), status = issue.getStatusStr(), issueID = Integer.toString(issue.getIssueID());
+		String issueMessage, reason = shortenIssue(issue.getReason()), player = issue.getPlayer(), status = issue.getStatusStr(), issueID = Integer.toString(issue.getIssueID());
 		if(auth == "player"){
 			issueMessage = ChatColor.BLUE + "Issue ID: " + ChatColor.GOLD + issueID + ChatColor.BLUE + " - Status: " + ChatColor.GOLD + status + ChatColor.BLUE + " - " + ChatColor.GOLD + reason + "\n ";
 		}
@@ -104,12 +104,12 @@ public class IssueManager {
 		return issueMessage;
 	}
 	
-	public String issueToMessage (Issue[] issue, CommandSender sender, String auth){
-		String pageString = "";
+	public String issuesToMessage (Issue[] issue, String auth){
+		StringBuilder build = new StringBuilder();
 		for(int i = 0; i < issue.length; i++){
-			pageString = pageString + convertIssueToMessage(issue[i], auth);
+			build.append(convertIssueToMessage(issue[i], auth));
 		}
-		return pageString;
+		return build.toString();
 	}
 	
 	public String shortenIssue(String issueReason){
@@ -117,7 +117,7 @@ public class IssueManager {
 			return issueReason;
 		}
 		else {
-			String shortReason = issueReason.substring(0,37) + "...";
+			String shortReason = issueReason.substring(0,42) + "...";
 			return shortReason;
 		}
 	}
