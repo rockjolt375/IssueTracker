@@ -7,5 +7,9 @@ commands:
 permissions: 
     issuetracker.issue:
         description: Allows players to create, close, and check issue status
+        default: false
     issuetracker.admin:
         description: Allows admins to check all issues and set the status of each
+        default: op
+        children:
+            issuetracker.issue: true

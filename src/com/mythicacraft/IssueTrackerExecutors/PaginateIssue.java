@@ -22,8 +22,13 @@ public class PaginateIssue {
 		if(!letterCheck(userPage)){
 			sender.sendMessage(ChatColor.RED + "You have entered an invalid page number!");
 		}
-		else{	
+		else{			
 			int pageNumber = Integer.parseInt(userPage);
+			
+			if(pageNumber > pageTotal()){
+				sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.RED + "That page number doesn't exist!");
+				return;
+			}
 			ChatPage message = ChatPaginator.paginate(paginateString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
 			String[] pages = message.getLines(); //puts the lines from the page into a string array
 	

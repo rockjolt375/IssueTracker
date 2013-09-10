@@ -117,7 +117,7 @@ public class IssueManager {
 			return issueReason;
 		}
 		else {
-			String shortReason = issueReason.substring(0,45) + "...";
+			String shortReason = issueReason.substring(0,37) + "...";
 			return shortReason;
 		}
 	}

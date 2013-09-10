@@ -65,11 +65,8 @@ public class IssueCommand implements CommandExecutor{
 						openIssues = IM.getOpenIssues();
 					}
 					if(!openIssues[0].exists()){
-<<<<<<< HEAD
 						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
-=======
 						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.BLUE+ "No issues exist for " + closePlayer);
->>>>>>> General Cleanup and Cosmetic fixes
 						return true;
 					}
 					String pageMessage = IM.issueToMessage(openIssues, sender, auth);
@@ -86,11 +83,8 @@ public class IssueCommand implements CommandExecutor{
 					openIssues = IM.getOpenIssues();
 					}
 					if(!openIssues[0].exists()){
-<<<<<<< HEAD
 						sender.sendMessage(ChatColor.GOLD + "No issues exist!");
-=======
 						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "No issues exist!");
->>>>>>> General Cleanup and Cosmetic fixes
 						return true;
 					}
 					String pageMessage = IM.issueToMessage(openIssues, sender, auth);
@@ -116,6 +110,7 @@ public class IssueCommand implements CommandExecutor{
 						Issue setIssue = IM.getIssue(issueID);
 						setIssue.setStatus(issueID, setIssue.switchStatus(args[2]));
 						playerNotification(setIssue.getPlayer());
+						sender.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.GREEN + "The issue's status has been updated!");
 						}
 					else {
 						//if the format was wrong
@@ -161,11 +156,8 @@ public class IssueCommand implements CommandExecutor{
 						return true;
 					}
 					closeIssue.setStatus(issueID, 3);
-<<<<<<< HEAD
 					sender.sendMessage(ChatColor.GREEN + "You have successfully closed an issue!");
-=======
 					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.GREEN + "You have successfully closed an issue!");
->>>>>>> General Cleanup and Cosmetic fixes
 				}
 				else {
 					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please type '/issue close <issue_ID>' to close an issue.");
@@ -182,11 +174,8 @@ public class IssueCommand implements CommandExecutor{
 					if(args.length == 2 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
 						Issue[] closedIssues = IM.getClosedIssues(sender.getName());
 						if(!closedIssues[0].exists()){
-<<<<<<< HEAD
 							sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
-=======
 							sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "No issues exist for " + closePlayer);
->>>>>>> General Cleanup and Cosmetic fixes
 							return true;
 						}
 						String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
@@ -195,11 +184,8 @@ public class IssueCommand implements CommandExecutor{
 						pageIssue.sendPage("1", sender, "Viewing All Closed Issues");
 						return true;
 					}
-<<<<<<< HEAD
 					sender.sendMessage(ChatColor.RED + "Please type '/issue view closed' to view your closed issues");
-=======
 					sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.RED + "Please type '/issue view closed' to view your closed issues");
->>>>>>> General Cleanup and Cosmetic fixes
 				}
 				if(args.length == 2){
 					int issueID;
@@ -212,7 +198,7 @@ public class IssueCommand implements CommandExecutor{
 						return true;
 					}
 					sender.sendMessage(ChatColor.BLUE + "*******" + ChatColor.GREEN + "Displaying Issue " + issueID + " for " + viewIssue.getPlayer() + ChatColor.BLUE + "*******" );
-					sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GOLD + viewIssue.getStatusStr() + ChatColor.BLUE + " Reason: " + ChatColor.GOLD + viewIssue.getReason()); 
+					sender.sendMessage(ChatColor.BLUE + "Status: " + ChatColor.GRAY + viewIssue.getStatusStr() + ChatColor.BLUE + " Reason: " + ChatColor.GOLD + viewIssue.getReason()); 
 					return true;
 				}	
 				else if(args.length == 3 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
@@ -240,11 +226,8 @@ public class IssueCommand implements CommandExecutor{
 				else if(sender.hasPermission("issuetracker.admin") && args.length == 4 && (args[1].equalsIgnoreCase("close") || args[1].equalsIgnoreCase("closed"))){
 					Issue[] closedIssues = IM.getClosedIssues(args[2]);
 					if(!closedIssues[0].exists()){
-<<<<<<< HEAD
 						sender.sendMessage(ChatColor.GOLD + "No issues exist for " + closePlayer);
-=======
 						sender.sendMessage(ChatColor.GOLD + "[IssueTracker]" + ChatColor.BLUE + "No issues exist for " + closePlayer);
->>>>>>> General Cleanup and Cosmetic fixes
 						return true;
 					}
 					String pageMessage = IM.issueToMessage(closedIssues, sender, auth);
