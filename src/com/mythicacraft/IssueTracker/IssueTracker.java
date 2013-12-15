@@ -7,22 +7,18 @@ import java.util.logging.Logger;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.mythicacraft.IssueTrackerExecutors.IssueCommand;
-import com.mythicacraft.IssueTrackerExecutors.SQLExecutors;
-import com.mythicacraft.IssueTrackerListener.IssueTrackerListener;
+import com.mythicacraft.IssueTracker.Utilities.DatabaseHandler;
+import com.mythicacraft.IssueTracker.Utilities.Listeners;
 
 
-public class cIssueTracker extends JavaPlugin{
-	public static cIssueTracker tracker;
+public class IssueTracker extends JavaPlugin{
 	public final Logger logger = Logger.getLogger("Minecraft");
-	SQLExecutors sqlExec = new SQLExecutors();
 	
-	public static String sqlHost;
-	public static String sqlPort;
-	public static String sqlUser;
-	public static String sqlPass;
-	public static String sqlDbase;
-	
+	public static String username;
+	public static String password;
+	public static String port;
+	public static String host;
+	public static String database;
 	
 //**********ENABLE/DISABLE METHODS**************
 	public void onEnable() {
@@ -42,7 +38,7 @@ public class cIssueTracker extends JavaPlugin{
 			this.getConfig().addDefault("MySql.dbase", "database");
 			this.getConfig().options().copyDefaults(true);
 			this.saveConfig();
-			logger.severe(String.format("[IssueTracker] - Default Configuration found...disabling!", getDescription().getName()));
+			logger.severe(String.format("[IssueTracker] - You must configure your plugin before use!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
 			}
 		//If config exists but has not been edited
@@ -50,31 +46,26 @@ public class cIssueTracker extends JavaPlugin{
 			logger.severe(String.format("[IssueTracker] - Default configuration detected. Please configure your database information!", getDescription().getName()));
             getServer().getPluginManager().disablePlugin(this);
 		}
-		//Fills SQL connection variables
 		else {
 			getDBInfo();
-
 			try {
 				//Checks for database table itrack_issuetracker
-				sqlExec.CreateTable();
+				new DatabaseHandler().CreateTable();
 				
 				//prepares the /issue commands
-				this.getCommand("issue").setExecutor(new IssueCommand(this));
+				this.getCommand("issue").setExecutor(new IssueCommands(this));
 				//Enables the Listener for mod joins
-				 getServer().getPluginManager().registerEvents(new IssueTrackerListener(), this);
+				 getServer().getPluginManager().registerEvents(new Listeners(), this);
 			} catch (SQLException e) {
 				logger.severe(String.format("[IssueTracker] - Couldn't connect to database!", getDescription().getName()));
 				getServer().getPluginManager().disablePlugin(this);		
 			}
 		}	
-		this.logMessage("Enabled.");
 	}
 	//Disables the plugin
 	public void onDisable() {
 		this.logMessage("Disabled.");
 		}
-	
-
 	
 	//Logger method
 	public void logMessage(String load){
@@ -82,13 +73,12 @@ public class cIssueTracker extends JavaPlugin{
 		this.logger.info("[" + pdfFile.getName() + "]" + " v" + pdfFile.getVersion() + " is " + load);
 		}
 	
-	//Pulls database information from the config
-	public void getDBInfo() {
-		sqlHost = this.getConfig().getString("MySql.host");
-		sqlPort = this.getConfig().getString("MySql.port");
-		sqlUser = this.getConfig().getString("MySql.user");
-		sqlPass = this.getConfig().getString("MySql.pass");
-		sqlDbase = this.getConfig().getString("MySql.dbase");
-		}
-}
+	public void getDBInfo(){
+		username = this.getConfig().getString("MySql.user");
+		password = this.getConfig().getString("MySql.pass");
+		host = this.getConfig().getString("MySql.host");
+		port = this.getConfig().getString("MySql.port");
+		database = this.getConfig().getString("MySql.dbase");
+	}
 
+}

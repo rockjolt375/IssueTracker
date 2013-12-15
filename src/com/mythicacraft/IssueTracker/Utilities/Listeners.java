@@ -1,4 +1,4 @@
-package com.mythicacraft.IssueTrackerListener;
+package com.mythicacraft.IssueTracker.Utilities;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,12 +10,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import com.mythicacraft.IssueTrackerExecutors.SQLExecutors;
-
-
-public class IssueTrackerListener implements Listener {
+public class Listeners implements Listener {
 	
-	SQLExecutors SQLExec = new SQLExecutors();
+	DatabaseHandler dbHand = new DatabaseHandler();
+	
+	public Listeners(){
+	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerJoin(PlayerJoinEvent event){
@@ -26,13 +26,9 @@ public class IssueTrackerListener implements Listener {
 			ResultSet sqlResult;
 			//Calls the query to check if issues are unanswered
 			try {
-				sqlResult =SQLExec.statusQuery("IS NOT NULL");
-				if(!sqlResult.next()){
-					SQLExec.dbClose();
-				}
-				else{
+				sqlResult = dbHand.getOpenIssues("IS NOT NULL");
+				if(sqlResult.next()){
 					player.sendMessage(ChatColor.GOLD + "[IssueTracker] " + ChatColor.AQUA + "There are issues that need resolved! Type '/issue status' to view them.");
-					SQLExec.dbClose();
 				}
 			} catch (SQLException e) {e.printStackTrace();}
 		}
